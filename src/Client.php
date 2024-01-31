@@ -53,7 +53,8 @@ readonly class Client {
 			);
 		}
 
-		throw new CustomerNotFoundException($email ?? $id);
+		// TODO:
+		throw new SpektrixAPIException("Something went wrong...");
 	}
 
 	public function getCustomer(
