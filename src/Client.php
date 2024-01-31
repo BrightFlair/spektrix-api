@@ -70,8 +70,13 @@ readonly class Client {
 			"headers" => $httpHeaders,
 		]);
 		if(!$response->ok) {
-			throw new SpektrixAPIException($response->status);
+			if($response->status === 404) {
+				return null;
+			}
+
+			throw new SpektrixAPIException("HTTP $response->status");
 		}
+
 		return $response->awaitJson();
 	}
 

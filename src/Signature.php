@@ -23,7 +23,16 @@ class Signature {
 		}
 
 		$decodedSecretKey = base64_decode($secretKeyBase64);
-		$utf8encodedStringToSign = mb_convert_encoding($stringToSign, 'UTF-8', 'ISO-8859-1');
-		$this->signedString = hash_hmac("sha1", $utf8encodedStringToSign, $decodedSecretKey, true);
+		$utf8encodedStringToSign = mb_convert_encoding(
+			$stringToSign,
+			"UTF-8",
+			"ISO-8859-1",
+		);
+		$this->signedString = hash_hmac(
+			"sha1",
+			$utf8encodedStringToSign,
+			$decodedSecretKey,
+			true,
+		);
 	}
 }
