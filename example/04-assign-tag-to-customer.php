@@ -53,4 +53,11 @@ catch(CustomerNotFoundException) {
 	exit(4);
 }
 
-$client->addTagToCustomer($tag, $customer);
+$addedTag = $client->addTagToCustomer($tag, $customer);
+
+echo "Added tag \"$addedTag->name\" to customer $customer->email\n\n";
+
+echo "All customer's tags:\n";
+foreach($client->getTagsForCustomer($customer) as $tag) {
+	echo "- $tag->name ($tag->id)\n";
+}

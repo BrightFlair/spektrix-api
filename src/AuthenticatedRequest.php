@@ -5,6 +5,7 @@ class AuthenticatedRequest {
 	public string $httpMethod;
 	public readonly string $uri;
 	public readonly Signature $signature;
+	public readonly ?string $body;
 
 	/** @param array<string, string> $kvp */
 	public function __construct(
@@ -37,6 +38,14 @@ class AuthenticatedRequest {
 				$value,
 				$uri,
 			);
+
+			if($bodyString) {
+				$bodyString = str_replace(
+					"{" . $key . "}",
+					$value,
+					$bodyString,
+				);
+			}
 		}
 
 		$this->httpMethod = $httpMethod;
@@ -47,5 +56,6 @@ class AuthenticatedRequest {
 			$this->uri,
 			$bodyString,
 		);
+		$this->body = $bodyString;
 	}
 }
