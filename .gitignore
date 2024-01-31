@@ -1,0 +1,4 @@
+.idea/
+vendor/
+test/phpunit/.phpunit.cache
+config.ini
