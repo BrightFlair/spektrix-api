@@ -18,6 +18,12 @@ $client = new BrightFlair\SpektrixAPI\Client(
 	$config["secret_key"],
 );
 
-foreach($client->getAllTags() as $tag) {
+$tagList = $client->getAllTags();
+echo "There are " . count($tagList) . " tags on the account:\n";
 
+foreach($tagList as $i => $tag) {
+	echo $i + 1;
+	echo ": ";
+	echo $tag->name;
+	echo "\n";
 }

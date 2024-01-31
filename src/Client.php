@@ -50,6 +50,20 @@ readonly class Client {
 		throw new CustomerNotFoundException($email ?? $id);
 	}
 
+	/** @return array<Tag> */
+	public function getAllTags():array {
+		$endpoint = Endpoint::getAllTags;
+		$authenticatedRequest = new AuthenticatedRequest(
+			$this->secretKey,
+			$endpoint,
+			$this->client
+		);
+
+		foreach($this->json($authenticatedRequest) as $thing) {
+			var_dump($thing);
+		}
+	}
+
 	private function json(AuthenticatedRequest $authenticatedRequest):?JsonObject {
 		$authorizationHeader = Signature::AUTH_PREFIX
 			. " "
