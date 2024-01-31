@@ -1,6 +1,6 @@
 <?php
 /**
- * This example finds a customer by the email address supplied as the first
+ * This example finds a customer by the email address, supplied as the first
  * argument to the script.
  *
  * For any example to work, you must supply your own secrets in config.ini:

@@ -25,5 +25,6 @@ foreach($tagList as $i => $tag) {
 	echo $i + 1;
 	echo ": ";
 	echo $tag->name;
+	echo " ($tag->id)";
 	echo "\n";
 }

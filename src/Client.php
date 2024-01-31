@@ -51,6 +51,16 @@ readonly class Client {
 		throw new CustomerNotFoundException($email ?? $id);
 	}
 
+	public function getTag(string $id):Tag {
+		foreach($this->getAllTags() as $tag) {
+			if($tag->id === $id) {
+				return $tag;
+			}
+		}
+
+		throw new TagNotFoundException($id);
+	}
+
 	/** @return array<Tag> */
 	public function getAllTags():array {
 		$endpoint = Endpoint::getAllTags;
