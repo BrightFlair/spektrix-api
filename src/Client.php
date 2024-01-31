@@ -5,6 +5,7 @@ use Gt\Fetch\Http;
 use Gt\Http\Response;
 use Gt\Json\JsonObject;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
+use Gt\Json\JsonPrimitive\JsonNullPrimitive;
 
 readonly class Client {
 	const USER_AGENT = "github.com/BrightFlair/SpektrixAPI";
@@ -149,6 +150,32 @@ readonly class Client {
 		throw new SpektrixAPIException("Error adding tag ID $tagId to customer $customerId");
 	}
 
+	public function removeTagFromCustomer(
+		Tag|string $tag,
+		Customer|string $customer,
+	):void {
+		$tagId = $tag instanceof Tag
+			? $tag->id
+			: $tag;
+		$customerId = $customer instanceof Customer
+			? $customer->id
+			: $customer;
+
+		$endpoint = Endpoint::removeTagFromCustomer;
+		$authenticatedRequest = new AuthenticatedRequest(
+			$this->secretKey,
+			$endpoint,
+			$this->client,
+			[
+				"id" => $customerId,
+				"tagId" => $tagId,
+			]
+		);
+
+		$this->json($authenticatedRequest);
+	}
+
+
 	private function json(AuthenticatedRequest $authenticatedRequest):?JsonObject {
 		$authorizationHeader = Signature::AUTH_PREFIX
 			. " "
@@ -180,6 +207,10 @@ readonly class Client {
 			}
 
 			throw new SpektrixAPIException("HTTP $response->status");
+		}
+
+		if($response->status === 204) {
+			return new JsonNullPrimitive();
 		}
 
 		return $response->awaitJson();
