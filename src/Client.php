@@ -22,6 +22,40 @@ readonly class Client {
 		$this->http = $fetchClient ?? new Http();
 	}
 
+	public function createCustomer(
+		string $email,
+		?string $firstName = null,
+		?string $lastName = null,
+		?string $mobile = null,
+	):Customer {
+		$endpoint = Endpoint::createCustomer;
+		$authenticatedRequest = new AuthenticatedRequest(
+			$this->secretKey,
+			$endpoint,
+			$this->client,
+			[
+				"email" => $email,
+				"firstName" => $firstName ?? "",
+				"lastName" => $lastName ?? "",
+				"mobile" => $mobile ?? "",
+				"birthDate" => ("D, d M Y H:i:s T"),
+				"friendlyId" => uniqid(),
+			]
+		);
+
+		if($json = $this->json($authenticatedRequest)) {
+			return new Customer(
+				$json->getString("id"),
+				$json->getString("email"),
+				firstName: $json->getString("firstName"),
+				lastName: $json->getString("lastName"),
+				mobile: $json->getString("mobile"),
+			);
+		}
+
+		throw new CustomerNotFoundException($email ?? $id);
+	}
+
 	public function getCustomer(
 		?string $id = null,
 		?string $email = null,
@@ -150,6 +184,7 @@ readonly class Client {
 		throw new SpektrixAPIException("Error adding tag ID $tagId to customer $customerId");
 	}
 
+
 	public function removeTagFromCustomer(
 		Tag|string $tag,
 		Customer|string $customer,
@@ -175,7 +210,6 @@ readonly class Client {
 		$this->json($authenticatedRequest);
 	}
 
-
 	private function json(AuthenticatedRequest $authenticatedRequest):?JsonObject {
 		$authorizationHeader = Signature::AUTH_PREFIX
 			. " "
@@ -190,6 +224,10 @@ readonly class Client {
 			"Host" => parse_url($authenticatedRequest->uri, PHP_URL_HOST),
 			"Authorization" => $authorizationHeader,
 		];
+
+		if($authenticatedRequest->body) {
+			$httpHeaders["Content-type"] = "application/x-www-form-urlencoded";
+		}
 
 		$init = [
 			"method" => $authenticatedRequest->httpMethod,
