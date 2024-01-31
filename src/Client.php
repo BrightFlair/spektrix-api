@@ -4,6 +4,7 @@ namespace BrightFlair\SpektrixAPI;
 use Gt\Fetch\Http;
 use Gt\Http\Response;
 use Gt\Json\JsonObject;
+use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
 
 readonly class Client {
 	const USER_AGENT = "github.com/BrightFlair/SpektrixAPI";
@@ -59,9 +60,20 @@ readonly class Client {
 			$this->client
 		);
 
-		foreach($this->json($authenticatedRequest) as $thing) {
-			var_dump($thing);
+		$tagList = [];
+		/** @var JsonArrayPrimitive $jsonArray */
+		$jsonArray = $this->json($authenticatedRequest);
+		foreach($jsonArray->getPrimitiveValue() as $item) {
+			array_push(
+				$tagList,
+				new Tag(
+					$item->getString("id"),
+					$item->getString("name"),
+				)
+			);
 		}
+
+		return $tagList;
 	}
 
 	private function json(AuthenticatedRequest $authenticatedRequest):?JsonObject {
