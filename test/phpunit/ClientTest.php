@@ -4,6 +4,8 @@ namespace BrightFlair\SpektrixAPI\Test;
 use BrightFlair\SpektrixAPI\Client;
 use BrightFlair\SpektrixAPI\CustomerNotFoundException;
 use BrightFlair\SpektrixAPI\Endpoint;
+use BrightFlair\SpektrixAPI\SpektrixAPIException;
+use BrightFlair\SpektrixAPI\TagNotFoundException;
 use Gt\Fetch\Http;
 use Gt\Http\Response;
 use Gt\Json\JsonObject;
@@ -55,30 +57,6 @@ class ClientTest extends TestCase {
 		self::assertSame("customer-id", $customer->id);
 		self::assertSame("customer@example.com", $customer->email);
 		self::assertSame("07123456789", $customer->mobile);
-	}
-
-	public function testGetAllTags():void {
-		$testCustomerId = "test-id-123";
-		$expectedUri = Client::BASE_URI . "/";
-		$expectedUri .= explode(" ", Endpoint::getAllTags->value)[1];
-		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
-		$expectedUri = str_replace("{id}", $testCustomerId, $expectedUri);
-
-		$fetchClient = self::getFetchClient($expectedUri, 200, [
-			["id" => "id-1", "name" => "name-1"],
-			["id" => "id-2", "name" => "name-2"],
-			["id" => "id-3", "name" => "name-3"],
-		]);
-
-		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
-		$allTags = $sut->getAllTags();
-
-		self::assertCount(3, $allTags);
-		foreach($allTags as $i => $tag) {
-			$num = $i + 1;
-			self::assertSame("id-$num", $tag->id);
-			self::assertSame("name-$num", $tag->name);
-		}
 	}
 
 	public function testCreateCustomer():void {
@@ -191,6 +169,136 @@ class ClientTest extends TestCase {
 		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
 		self::expectException(CustomerNotFoundException::class);
 		$sut->getCustomer(email: $customerEmail);
+	}
+
+	public function testGetAllTags():void {
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getAllTags->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			["id" => "id-1", "name" => "name-1"],
+			["id" => "id-2", "name" => "name-2"],
+			["id" => "id-3", "name" => "name-3"],
+		]);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$allTags = $sut->getAllTags();
+
+		self::assertCount(3, $allTags);
+		foreach($allTags as $i => $tag) {
+			$num = $i + 1;
+			self::assertSame("id-$num", $tag->id);
+			self::assertSame("name-$num", $tag->name);
+		}
+	}
+
+	public function testGetTagById():void {
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getAllTags->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			["id" => "id-1", "name" => "name-1"],
+			["id" => "id-2", "name" => "name-2"],
+			["id" => "id-3", "name" => "name-3"],
+		]);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$tag = $sut->getTag(id: "id-2");
+
+		self::assertSame("name-2", $tag->name);
+	}
+
+	public function testGetTagById_notFound():void {
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getAllTags->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			["id" => "id-1", "name" => "name-1"],
+			["id" => "id-2", "name" => "name-2"],
+			["id" => "id-3", "name" => "name-3"],
+		]);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		self::expectException(TagNotFoundException::class);
+		$sut->getTag(id: "id-4");
+	}
+
+	public function testGetTagsForCustomer():void {
+		$customerId = uniqid("I-");
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getCustomerTags->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			["id" => "id-1", "name" => "name-1"],
+			["id" => "id-2", "name" => "name-2"],
+		]);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$allTags = $sut->getTagsForCustomer($customerId);
+
+		self::assertCount(2, $allTags);
+		foreach($allTags as $i => $tag) {
+			$num = $i + 1;
+			self::assertSame("id-$num", $tag->id);
+			self::assertSame("name-$num", $tag->name);
+		}
+	}
+
+	public function testAddTagToCustomer():void {
+		$customerId = uniqid("I-");
+		$tagId = "tag-id-1";
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::addTagToCustomer->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
+		$expectedUri = str_replace("{tagId}", $tagId, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			"id" => $tagId,
+			"name" => "Example tag name",
+		]);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$tag = $sut->addTagToCustomer($tagId, $customerId);
+		self::assertSame($tagId, $tag->id);
+		self::assertSame("Example tag name", $tag->name);
+	}
+
+	public function testAddTagToCustomer_invalid():void {
+		$customerId = uniqid("I-");
+		$tagId = "tag-id-1-does-not-exist";
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::addTagToCustomer->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
+		$expectedUri = str_replace("{tagId}", $tagId, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 404);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		self::expectException(SpektrixAPIException::class);
+		self::expectExceptionMessage("Error adding tag ID $tagId to customer $customerId");
+		$sut->addTagToCustomer($tagId, $customerId);
+	}
+
+	public function testRemoveTagFromCustomer():void {
+		$customerId = uniqid("I-");
+		$tagId = "tag-id-1";
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::removeTagFromCustomer->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
+		$expectedUri = str_replace("{tagId}", $tagId, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 204);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$sut->removeTagFromCustomer($tagId, $customerId);
 	}
 
 	private function getFetchClient(
