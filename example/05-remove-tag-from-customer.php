@@ -1,6 +1,6 @@
 <?php
 /**
- * This example assigns an existing tag to an existing customer. The tag ID must
+ * This example removes a tag from a customer. The tag ID must
  * be the first argument to the script, the customer ID must be the second
  * argument to the script.
  *
@@ -53,16 +53,15 @@ catch(CustomerNotFoundException) {
 	exit(4);
 }
 
-echo "Customer's tags before addition:\n";
+echo "Customer's tags before removal:\n";
 foreach($client->getTagsForCustomer($customer) as $customerTag) {
 	echo "- $customerTag->name ($customerTag->id)\n";
 }
 
-$addedTag = $client->addTagToCustomer($tag, $customer);
+$client->removeTagFromCustomer($tag, $customer);
+echo "\nRemoved tag from customer!\n\n";
 
-echo "\nAdded tag \"$addedTag->name\" to customer $customer->email\n\n";
-
-echo "All customer's tags after addition:\n";
+echo "All customer's tags after removal:\n";
 foreach($client->getTagsForCustomer($customer) as $customerTag) {
 	echo "- $customerTag->name ($customerTag->id)\n";
 }

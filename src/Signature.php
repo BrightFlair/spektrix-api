@@ -17,7 +17,7 @@ class Signature {
 			. "\n" . $uri
 			. "\n" . $this->date;
 		if($httpMethod !== "GET") {
-			$md5BodyString = md5($bodyString, true);
+			$md5BodyString = md5($bodyString ?? "", true);
 			$base64EncodedBodyString = base64_encode($md5BodyString);
 			$stringToSign .= "\n$base64EncodedBodyString";
 		}
