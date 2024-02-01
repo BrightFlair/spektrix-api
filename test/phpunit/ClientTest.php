@@ -2,12 +2,14 @@
 namespace BrightFlair\SpektrixAPI\Test;
 
 use BrightFlair\SpektrixAPI\Client;
+use BrightFlair\SpektrixAPI\CustomerNotFoundException;
 use BrightFlair\SpektrixAPI\Endpoint;
 use Gt\Fetch\Http;
 use Gt\Http\Response;
 use Gt\Json\JsonObject;
 use Gt\Json\JsonObjectBuilder;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
+use Gt\Json\JsonPrimitive\JsonNullPrimitive;
 use Gt\Promise\Promise;
 use PHPUnit\Framework\TestCase;
 
@@ -107,15 +109,101 @@ class ClientTest extends TestCase {
 		self::assertSame($newCustomerMobile, $customer->mobile);
 	}
 
+	public function testGetCustomerById():void {
+		$customerId = uniqid("I-");
+		$customerEmail = "test@example.com";
+		$customerFirstName = "Test";
+		$customerLastName = "Tester";
+		$customerMobile = "07123456789";
+
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getCustomerById->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			"id" => $customerId,
+			"email" => $customerEmail,
+			"firstName" => $customerFirstName,
+			"lastName" => $customerLastName,
+			"mobile" => $customerMobile,
+		]);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$customer = $sut->getCustomer(id: $customerId);
+		self::assertSame($customerId, $customer->id);
+		self::assertSame($customerEmail, $customer->email);
+		self::assertSame($customerFirstName, $customer->firstName);
+		self::assertSame($customerLastName, $customer->lastName);
+		self::assertSame($customerMobile, $customer->mobile);
+	}
+
+	public function testGetCustomerById_notFound():void {
+		$customerId = uniqid("I-");
+
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getCustomerById->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 404);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		self::expectException(CustomerNotFoundException::class);
+		$sut->getCustomer(id: $customerId);
+	}
+
+	public function testGetCustomerByEmail():void {
+		$customerId = uniqid("I-");
+		$customerEmail = "test@example.com";
+		$customerFirstName = "Test";
+		$customerLastName = "Tester";
+		$customerMobile = "07123456789";
+
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getCustomerByEmail->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{email}", $customerEmail, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			"id" => $customerId,
+			"email" => $customerEmail,
+			"firstName" => $customerFirstName,
+			"lastName" => $customerLastName,
+			"mobile" => $customerMobile,
+		]);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$customer = $sut->getCustomer(email: $customerEmail);
+		self::assertSame($customerId, $customer->id);
+		self::assertSame($customerEmail, $customer->email);
+		self::assertSame($customerFirstName, $customer->firstName);
+		self::assertSame($customerLastName, $customer->lastName);
+		self::assertSame($customerMobile, $customer->mobile);
+	}
+
+	public function testGetCustomerByEmail_notFound():void {
+		$customerEmail = "test@example.com";
+
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::getCustomerByEmail->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+		$expectedUri = str_replace("{email}", $customerEmail, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 404);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		self::expectException(CustomerNotFoundException::class);
+		$sut->getCustomer(email: $customerEmail);
+	}
+
 	private function getFetchClient(
 		string $uri,
 		int $status,
-		array $responseData,
+		?array $responseData = null,
 	):Http {
 		$builder = new JsonObjectBuilder();
-		$json = $builder->fromJsonString(json_encode($responseData));
+		$json = is_null($responseData)
+			? new JsonNullPrimitive()
+			: $builder->fromJsonString(json_encode($responseData));
 		$response = self::createMock(Response::class);
-		$response->expects(self::once())
+		$response->expects(self::exactly(is_null($responseData) ? 0 : 1))
 			->method("awaitJson")
 			->willReturn($json);
 
