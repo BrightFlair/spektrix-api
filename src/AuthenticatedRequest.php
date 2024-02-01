@@ -32,6 +32,10 @@ class AuthenticatedRequest {
 			$endpointPath,
 		]);
 		$uri = str_replace("{client}", $client, $uri);
+		/**
+		 * @var string $key
+		 * @var ?string $value
+		 */
 		foreach($kvp as $key => $value) {
 			$uri = str_replace(
 				"{" . $key . "}",
