@@ -35,7 +35,7 @@ class AuthenticatedRequest {
 		foreach($kvp as $key => $value) {
 			$uri = str_replace(
 				"{" . $key . "}",
-				$value,
+				$value ?? "",
 				$uri,
 			);
 
