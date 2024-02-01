@@ -47,3 +47,15 @@ Missing functionality
 ---------------------
 
 I have built this library for my own use to integrate with [Nimbus Disability](https://www.nimbusdisability.com). I don't plan on building any more functionality than is required for the type of integration I'm using, [unless someone persuades me](https://github.com/sponsors/g105b) to develop it further.
+
+The following features are implemented, and tested with examples:
+
+- Create customer
+- Get customer (id or email)
+- Get tag by ID
+- Get all tags
+- Get tags for customer
+- Add tag to customer
+- Remove tag from customer
+
+More functionality will only be added as and when it is required by integrations, but others are free to create pull requests.
