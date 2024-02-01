@@ -6,20 +6,21 @@ use BrightFlair\SpektrixAPI\Endpoint;
 use Gt\Fetch\Http;
 use Gt\Http\Response;
 use Gt\Json\JsonObject;
+use Gt\Json\JsonObjectBuilder;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
 use Gt\Promise\Promise;
 use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase {
-	public function testGetCustomer_byId():void {
-		$username = "test-user";
-		$client = "test-client";
-		$secretKey = "super-secret-key";
+	const TEST_USERNAME = "test-user";
+	const TEST_CLIENT = "test-client";
+	const TEST_SECRET_KEY = "super-secret-key";
 
+	public function testGetCustomer_byId():void {
 		$testCustomerId = "test-id-123";
 		$expectedUri = Client::BASE_URI . "/";
 		$expectedUri .= explode(" ", Endpoint::getCustomerById->value)[1];
-		$expectedUri = str_replace("{client}", $client, $expectedUri);
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
 		$expectedUri = str_replace("{id}", $testCustomerId, $expectedUri);
 
 		$json = self::createMock(JsonObject::class);
@@ -47,7 +48,7 @@ class ClientTest extends TestCase {
 			->with($expectedUri)
 			->willReturn($response);
 
-		$sut = new Client($username, $client, $secretKey, $fetchClient);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
 		$customer = $sut->getCustomer(id: $testCustomerId);
 		self::assertSame("customer-id", $customer->id);
 		self::assertSame("customer@example.com", $customer->email);
@@ -55,56 +56,19 @@ class ClientTest extends TestCase {
 	}
 
 	public function testGetAllTags():void {
-		$username = "test-user";
-		$client = "test-client";
-		$secretKey = "super-secret-key";
-
 		$testCustomerId = "test-id-123";
 		$expectedUri = Client::BASE_URI . "/";
 		$expectedUri .= explode(" ", Endpoint::getAllTags->value)[1];
-		$expectedUri = str_replace("{client}", $client, $expectedUri);
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
 		$expectedUri = str_replace("{id}", $testCustomerId, $expectedUri);
 
-		$jsonTag1 = self::createMock(JsonObject::class);
-		$jsonTag1->method("getString")->willReturnMap([
-			["id", "id-1"],
-			["name", "name-1"],
-		]);
-		$jsonTag2 = self::createMock(JsonObject::class);
-		$jsonTag2->method("getString")->willReturnMap([
-			["id", "id-2"],
-			["name", "name-2"],
-		]);
-		$jsonTag3 = self::createMock(JsonObject::class);
-		$jsonTag3->method("getString")->willReturnMap([
-			["id", "id-3"],
-			["name", "name-3"],
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			["id" => "id-1", "name" => "name-1"],
+			["id" => "id-2", "name" => "name-2"],
+			["id" => "id-3", "name" => "name-3"],
 		]);
 
-		$json = self::createMock(JsonArrayPrimitive::class);
-		$json->method("getPrimitiveValue")->willReturn([
-			$jsonTag1,
-			$jsonTag2,
-			$jsonTag3,
-		]);
-
-		$response = self::createMock(Response::class);
-		$response->method("__get")->willReturnMap([
-			["ok", true],
-			["status", 200],
-		]);
-		$response->method("getStatusCode")->willReturn(200);
-		$response->expects(self::once())
-			->method("awaitJson")
-			->willReturn($json);
-
-		$fetchClient = self::createMock(Http::class);
-		$fetchClient->expects(self::once())
-			->method("awaitFetch")
-			->with($expectedUri)
-			->willReturn($response);
-
-		$sut = new Client($username, $client, $secretKey, $fetchClient);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
 		$allTags = $sut->getAllTags();
 
 		self::assertCount(3, $allTags);
@@ -113,5 +77,59 @@ class ClientTest extends TestCase {
 			self::assertSame("id-$num", $tag->id);
 			self::assertSame("name-$num", $tag->name);
 		}
+	}
+
+	public function testCreateCustomer():void {
+		$newCustomerId = uniqid("I-");
+		$newCustomerEmail = "test@example.com";
+		$newCustomerFirstName = "Test";
+		$newCustomerLastName = "Tester";
+		$newCustomerMobile = "07123456789";
+
+		$expectedUri = Client::BASE_URI . "/";
+		$expectedUri .= explode(" ", Endpoint::createCustomer->value)[1];
+		$expectedUri = str_replace("{client}", self::TEST_CLIENT, $expectedUri);
+
+		$fetchClient = self::getFetchClient($expectedUri, 200, [
+			"id" => $newCustomerId,
+			"email" => $newCustomerEmail,
+			"firstName" => $newCustomerFirstName,
+			"lastName" => $newCustomerLastName,
+			"mobile" => $newCustomerMobile,
+		]);
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		$customer = $sut->createCustomer($newCustomerEmail, $newCustomerFirstName, $newCustomerLastName, $newCustomerMobile);
+
+		self::assertSame($newCustomerId, $customer->id);
+		self::assertSame($newCustomerEmail, $customer->email);
+		self::assertSame($newCustomerFirstName, $customer->firstName);
+		self::assertSame($newCustomerLastName, $customer->lastName);
+		self::assertSame($newCustomerMobile, $customer->mobile);
+	}
+
+	private function getFetchClient(
+		string $uri,
+		int $status,
+		array $responseData,
+	):Http {
+		$builder = new JsonObjectBuilder();
+		$json = $builder->fromJsonString(json_encode($responseData));
+		$response = self::createMock(Response::class);
+		$response->expects(self::once())
+			->method("awaitJson")
+			->willReturn($json);
+
+		$response->method("__get")->willReturnMap([
+			["ok", $status >= 200 && $status < 300],
+			["status", $status],
+		]);
+
+		$http = self::createMock(Http::class);
+		$http->expects(self::once())
+			->method("awaitFetch")
+			->with($uri)
+			->willReturn($response);
+
+		return $http;
 	}
 }
