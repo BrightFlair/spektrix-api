@@ -227,7 +227,7 @@ readonly class Client {
 		];
 
 		if($authenticatedRequest->body) {
-			$httpHeaders["Content-type"] = "application/x-www-form-urlencoded";
+			$httpHeaders["Content-type"] = "application/json";
 		}
 
 		$init = [

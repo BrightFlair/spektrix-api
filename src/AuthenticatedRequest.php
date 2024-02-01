@@ -19,9 +19,9 @@ class AuthenticatedRequest {
 			$endpoint->value,
 			2,
 		);
-		$bodyString = null;
+		$httpBodyString = null;
 		if(str_contains($endpointPath, " ")) {
-			[$endpointPath, $bodyString] = explode(
+			[$endpointPath, $httpBodyString] = explode(
 				" ",
 				$endpointPath,
 			);
@@ -39,23 +39,30 @@ class AuthenticatedRequest {
 				$uri,
 			);
 
-			if($bodyString) {
-				$bodyString = str_replace(
+			if($httpBodyString) {
+				$httpBodyString = str_replace(
 					"{" . $key . "}",
 					$value,
-					$bodyString,
+					$httpBodyString,
 				);
 			}
 		}
 
 		$this->httpMethod = $httpMethod;
 		$this->uri = $uri;
+
+		$jsonBodyString = null;
+		if($httpBodyString) {
+			parse_str($httpBodyString, $bodyKvp);
+			$jsonBodyString = json_encode($bodyKvp);
+		}
+
+		$this->body = $jsonBodyString;
 		$this->signature = new Signature(
 			$secretKey,
 			$httpMethod,
 			$this->uri,
-			$bodyString,
+			$this->body,
 		);
-		$this->body = $bodyString;
 	}
 }

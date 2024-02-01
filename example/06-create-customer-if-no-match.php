@@ -61,6 +61,11 @@ catch(CustomerNotFoundException) {
 	echo "No customer was found with the email address $email\n";
 	echo "Creating new customer...\n";
 
-// TODO: This simply isn't working. HTTP 500 with no reason why. I'm going to have to get back in contact with the team.
 	$customer = $client->createCustomer($email, $firstName, $lastName, $mobileNumber);
+	echo "New customer created successfully:\n";
+	echo "ID: $customer->id\n";
+	echo "Email: $customer->email\n";
+	echo "First name: $customer->firstName\n";
+	echo "Last name: $customer->lastName\n";
+	echo "Mobile: $customer->mobile\n";
 }
