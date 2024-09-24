@@ -109,6 +109,10 @@ readonly class Client {
 		$tagList = [];
 		/** @var JsonArrayPrimitive $jsonArray */
 		$jsonArray = $this->json($authenticatedRequest);
+		if(!method_exists($jsonArray, "getPrimitiveValue")) {
+			return [];
+		}
+
 		foreach($jsonArray->getPrimitiveValue() as $item) {
 			array_push(
 				$tagList,
