@@ -143,17 +143,24 @@ readonly class Client {
 		);
 
 		$tagList = [];
-		/** @var JsonArrayPrimitive $jsonArray */
-		$jsonArray = $this->json($authenticatedRequest);
-		foreach($jsonArray->getPrimitiveValue() as $item) {
-			array_push(
-				$tagList,
-				new Tag(
-					$item->getString("id"),
-					$item->getString("name"),
-				)
-			);
+		$json = $this->json($authenticatedRequest);
+
+		if ($json instanceof JsonArrayPrimitive) {
+
+
+			foreach ($json->getPrimitiveValue() as $item) {
+				array_push(
+					$tagList,
+					new Tag(
+						$item->getString("id"),
+						$item->getString("name")
+					)
+				);
+
+			}
+
 		}
+
 		return $tagList;
 	}
 
