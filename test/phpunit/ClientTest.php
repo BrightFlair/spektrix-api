@@ -234,8 +234,9 @@ class ClientTest extends TestCase {
 		$expectedUri = str_replace("{id}", $customerId, $expectedUri);
 
 		$fetchClient = self::getFetchClient($expectedUri, 200, [
-			["id" => "id-1", "name" => "name-1"],
-			["id" => "id-2", "name" => "name-2"],
+
+				["id" => "id-1", "name" => "name-1"],
+				["id" => "id-2", "name" => "name-2"],
 		]);
 
 		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
