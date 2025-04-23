@@ -17,7 +17,7 @@ readonly class Client {
 		private string $username,
 		private string $client,
 		private string $secretKey,
-		Http $fetchClient = null,
+		?Http $fetchClient = null,
 	) {
 		$this->http = $fetchClient ?? new Http();
 	}
