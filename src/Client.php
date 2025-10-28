@@ -8,6 +8,9 @@ use Gt\Json\JsonObject;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
 use Gt\Json\JsonPrimitive\JsonNullPrimitive;
 
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 readonly class Client {
 	const USER_AGENT = "github.com/BrightFlair/SpektrixAPI";
 	const BASE_URI = "https://system.spektrix.com/{client}/api";
