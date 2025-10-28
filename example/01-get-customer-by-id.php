@@ -35,5 +35,5 @@ try {
 	echo "Last name: $customer->lastName\n";
 }
 catch(CustomerNotFoundException) {
-	echo "No customer was found with the email address $customerId\n";
+	echo "No customer was found with the ID $customerId\n";
 }

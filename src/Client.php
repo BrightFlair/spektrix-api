@@ -3,6 +3,7 @@ namespace BrightFlair\SpektrixAPI;
 
 use Gt\Fetch\Http;
 use Gt\Http\Response;
+use Gt\Json\JsonDecodeException;
 use Gt\Json\JsonObject;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
 use Gt\Json\JsonPrimitive\JsonNullPrimitive;
@@ -256,14 +257,20 @@ readonly class Client {
 				return null;
 			}
 
-			throw new SpektrixAPIException("HTTP $response->status");
+			$text = $response->awaitText();
+			throw new SpektrixAPIException("HTTP $response->status - $text");
 		}
 
 		if($response->status === 204) {
 			return new JsonNullPrimitive();
 		}
 
-		return $response->awaitJson();
+		try {
+			return $response->awaitJson();
+		}
+		catch(JsonDecodeException $exception) {
+			throw new SpektrixAPIException($exception->getMessage());
+		}
 	}
 
 }
