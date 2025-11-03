@@ -8,6 +8,7 @@ use BrightFlair\SpektrixAPI\SpektrixAPIException;
 use BrightFlair\SpektrixAPI\TagNotFoundException;
 use Gt\Fetch\Http;
 use Gt\Http\Response;
+use Gt\Http\Stream;
 use Gt\Json\JsonObject;
 use Gt\Json\JsonObjectBuilder;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
@@ -300,6 +301,24 @@ class ClientTest extends TestCase {
 
 		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
 		$sut->removeTagFromCustomer($tagId, $customerId);
+	}
+
+	public function testInvalidJson():void {
+		$bodyStream = self::createMock(Stream::class);
+		$bodyStream->method("getContents")
+			->willReturn("<error>Wait a minute, this ain't JSON!</error>");
+
+		$response = (new Response(200))->withBody($bodyStream);
+
+		$fetchClient = self::createMock(Http::class);
+		$fetchClient->expects(self::once())
+			->method("awaitFetch")
+			->willReturn($response);
+
+		$sut = new Client(self::TEST_USERNAME, self::TEST_CLIENT, self::TEST_SECRET_KEY, $fetchClient);
+		self::expectException(SpektrixAPIException::class);
+		self::expectExceptionMessage("Error decoding JSON: Syntax error");
+		$sut->getCustomer(id: "ABC-123");
 	}
 
 	private function getFetchClient(

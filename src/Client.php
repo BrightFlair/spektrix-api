@@ -3,10 +3,14 @@ namespace BrightFlair\SpektrixAPI;
 
 use Gt\Fetch\Http;
 use Gt\Http\Response;
+use Gt\Json\JsonDecodeException;
 use Gt\Json\JsonObject;
 use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
 use Gt\Json\JsonPrimitive\JsonNullPrimitive;
 
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 readonly class Client {
 	const USER_AGENT = "github.com/BrightFlair/SpektrixAPI";
 	const BASE_URI = "https://system.spektrix.com/{client}/api";
@@ -28,6 +32,15 @@ readonly class Client {
 		?string $lastName = null,
 		?string $mobile = null,
 	):Customer {
+// This isn't typically the way URL-encoded data will be passed, if + or -
+// characters are present, Spektrix's servers will fail.
+		$email = rawurlencode($email);
+		$email = str_replace("+", "%2b", $email);
+		$firstName = rawurlencode($firstName ?? "");
+		$firstName = str_replace("'", "%27", $firstName);
+		$lastName = rawurlencode($lastName ?? "");
+		$lastName = str_replace("'", "%27", $lastName);
+
 		$endpoint = Endpoint::createCustomer;
 		$authenticatedRequest = new AuthenticatedRequest(
 			$this->secretKey,
@@ -35,8 +48,8 @@ readonly class Client {
 			$this->client,
 			[
 				"email" => $email,
-				"firstName" => $firstName ?? "",
-				"lastName" => $lastName ?? "",
+				"firstName" => $firstName,
+				"lastName" => $lastName,
 				"mobile" => $mobile ?? "",
 				"birthDate" => ("D, d M Y H:i:s T"),
 				"friendlyId" => uniqid(),
@@ -256,14 +269,20 @@ readonly class Client {
 				return null;
 			}
 
-			throw new SpektrixAPIException("HTTP $response->status");
+			$text = $response->awaitText();
+			throw new SpektrixAPIException("HTTP $response->status - $text");
 		}
 
 		if($response->status === 204) {
 			return new JsonNullPrimitive();
 		}
 
-		return $response->awaitJson();
+		try {
+			return $response->awaitJson();
+		}
+		catch(JsonDecodeException $exception) {
+			throw new SpektrixAPIException($exception->getMessage());
+		}
 	}
 
 }
