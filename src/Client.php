@@ -32,6 +32,15 @@ readonly class Client {
 		?string $lastName = null,
 		?string $mobile = null,
 	):Customer {
+// This isn't typically the way URL-encoded data will be passed, if + or -
+// characters are present, Spektrix's servers will fail.
+		$email = rawurlencode($email);
+		$email = str_replace("+", "%2b", $email);
+		$firstName = rawurlencode($firstName ?? "");
+		$firstName = str_replace("'", "%27", $firstName);
+		$lastName = rawurlencode($lastName ?? "");
+		$lastName = str_replace("'", "%27", $lastName);
+
 		$endpoint = Endpoint::createCustomer;
 		$authenticatedRequest = new AuthenticatedRequest(
 			$this->secretKey,
@@ -39,8 +48,8 @@ readonly class Client {
 			$this->client,
 			[
 				"email" => $email,
-				"firstName" => $firstName ?? "",
-				"lastName" => $lastName ?? "",
+				"firstName" => $firstName,
+				"lastName" => $lastName,
 				"mobile" => $mobile ?? "",
 				"birthDate" => ("D, d M Y H:i:s T"),
 				"friendlyId" => uniqid(),
