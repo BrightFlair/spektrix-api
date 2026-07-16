@@ -2,10 +2,9 @@
 namespace BrightFlair\SpektrixAPI;
 
 use Gt\Fetch\Http;
-use Gt\Http\Response;
-use Gt\Json\JsonObject;
-use Gt\Json\JsonPrimitive\JsonArrayPrimitive;
-use Gt\Json\JsonPrimitive\JsonNullPrimitive;
+use GT\Json\JSONObject;
+use GT\Json\JSONPrimitive\JSONArrayPrimitive;
+use GT\Json\JSONPrimitive\JSONNullPrimitive;
 
 readonly class Client {
 	const USER_AGENT = "github.com/BrightFlair/SpektrixAPI";
